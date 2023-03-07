@@ -38,11 +38,12 @@ class SMCache {
     }
   }
 
-  #wrapper(data: unknown) {
+  #wrapper({ data, ttl }: { data: unknown; ttl?: number }) {
     const _data: unknown = this.#clone
       ? JSON.parse(JSON.stringify(data))
       : data;
-    return { data: _data, expires: Date.now() + this.#ttl };
+    const _ttl = ttl || Date.now() + this.#ttl;
+    return { data: _data, expires: _ttl };
   }
 
   get(key: Key) {
@@ -55,8 +56,8 @@ class SMCache {
     return undefined;
   }
 
-  set(key: Key, data: unknown) {
-    this.#cache.set(key, this.#wrapper(data));
+  set(key: Key, data: unknown, ttl?: number) {
+    this.#cache.set(key, this.#wrapper({ data, ttl }));
   }
 
   delete(key: Key) {

@@ -52,6 +52,12 @@ describe('expiration', () => {
     const value = cache.get('key');
     expect(value).toBe('value');
   });
+
+  test('instant expiration', () => {
+    cache.set('key', 'value', -1);
+    const value = cache.get('key');
+    expect(value).toBeUndefined();
+  });
 });
 
 describe('mod key function', () => {
