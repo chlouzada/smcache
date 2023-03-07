@@ -55,8 +55,9 @@ describe('expiration', () => {
 
   test('instant expiration', () => {
     cache.set('key', 'value', -1);
-    const value = cache.get('key');
-    expect(value).toBeUndefined();
+    expect(cache.get('key')).toBeUndefined();
+    cache.set('key', 'value', 0);
+    expect(cache.get('key')).toBeUndefined();
   });
 });
 

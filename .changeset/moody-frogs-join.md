@@ -1,0 +1,5 @@
+---
+'smcache': patch
+---
+
+fix operator

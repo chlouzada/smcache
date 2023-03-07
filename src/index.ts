@@ -22,10 +22,9 @@ class SMCache {
   readonly #ttl: number;
 
   private constructor(opts?: Options) {
-    this.#clone = opts?.clone || DEFAULTS.clone;
-    this.#ttl = opts?.ttl || DEFAULTS.ttl;
+    this.#clone = opts?.clone ?? DEFAULTS.clone;
+    this.#ttl = opts?.ttl ?? DEFAULTS.ttl;
 
-    // rewrite the get and methods of cache if a fnKey function is provided
     if (opts?.fnKey) {
       const fn = opts.fnKey;
       const _get = this.#cache.get;
@@ -42,7 +41,7 @@ class SMCache {
     const _data: unknown = this.#clone
       ? JSON.parse(JSON.stringify(data))
       : data;
-    const _ttl = ttl || Date.now() + this.#ttl;
+    const _ttl = ttl ?? Date.now() + this.#ttl;
     return { data: _data, expires: _ttl };
   }
 
