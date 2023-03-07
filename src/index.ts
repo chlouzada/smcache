@@ -1,3 +1,5 @@
+type Key = string | number;
+
 type CacheItem = {
   data: unknown;
   expires: number;
@@ -8,19 +10,32 @@ const DEFAULTS = {
   ttl: 1000 * 60 * 60 * 24,
 };
 
-type Options = {
+export type Options = {
   clone?: boolean;
   ttl?: number;
+  fnKey?: (key: Key) => string | number;
 };
 
 class SMCache {
-  #cache = new Map<string | number | object, CacheItem>();
+  #cache = new Map<Key, CacheItem>();
   readonly #clone: boolean;
   readonly #ttl: number;
 
   private constructor(opts?: Options) {
     this.#clone = opts?.clone || DEFAULTS.clone;
     this.#ttl = opts?.ttl || DEFAULTS.ttl;
+
+    // rewrite the get and methods of cache if a fnKey function is provided
+    if (opts?.fnKey) {
+      const fn = opts.fnKey;
+      const _get = this.#cache.get;
+      const _set = this.#cache.set;
+      const _delete = this.#cache.delete;
+      this.#cache.get = (k: Key) => _get.call(this.#cache, fn(k));
+      this.#cache.set = (k: Key, v: CacheItem) =>
+        _set.call(this.#cache, fn(k), v);
+      this.#cache.delete = (k: Key) => _delete.call(this.#cache, fn(k));
+    }
   }
 
   #wrapper(data: unknown) {
@@ -30,7 +45,7 @@ class SMCache {
     return { data: _data, expires: Date.now() + this.#ttl };
   }
 
-  get(key: string) {
+  get(key: Key) {
     const now = Date.now();
     const item = this.#cache.get(key);
     if (item && item.expires > now) {
@@ -40,11 +55,11 @@ class SMCache {
     return undefined;
   }
 
-  set(key: string, data: unknown) {
+  set(key: Key, data: unknown) {
     this.#cache.set(key, this.#wrapper(data));
   }
 
-  delete(key: string) {
+  delete(key: Key) {
     this.#cache.delete(key);
   }
 
