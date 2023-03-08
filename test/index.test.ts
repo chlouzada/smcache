@@ -54,9 +54,9 @@ describe('expiration', () => {
   });
 
   test('instant expiration', () => {
-    cache.set('key', 'value', -1);
+    cache.set('key', 'value', { ttl: -1 });
     expect(cache.get('key')).toBeUndefined();
-    cache.set('key', 'value', 0);
+    cache.set('key', 'value', { ttl: 0 });
     expect(cache.get('key')).toBeUndefined();
   });
 });

@@ -46,17 +46,21 @@ class SMCache {
   }
 
   get(key: Key) {
-    const now = Date.now();
     const item = this.#cache.get(key);
-    if (item && item.expires > now) {
+
+    if (item && item.expires > Date.now()) {
       return item.data;
     }
-    this.#cache.delete(key);
+
+    if (item) {
+      this.#cache.delete(key);
+    }
+
     return undefined;
   }
 
-  set(key: Key, data: unknown, ttl?: number) {
-    this.#cache.set(key, this.#wrapper({ data, ttl }));
+  set(key: Key, data: unknown, opts?: { ttl?: number }) {
+    this.#cache.set(key, this.#wrapper({ data, ...opts }));
   }
 
   delete(key: Key) {
