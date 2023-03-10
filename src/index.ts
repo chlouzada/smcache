@@ -3,6 +3,7 @@ type Key = string | number;
 type CacheItem = {
   data: unknown;
   expires: number;
+  key?: Key;
 };
 
 const DEFAULTS = {
@@ -20,10 +21,12 @@ class SMCache {
   #cache = new Map<Key, CacheItem>();
   readonly #clone: boolean;
   readonly #ttl: number;
+  readonly #fnKey: ((key: Key) => string | number) | undefined;
 
   private constructor(opts?: Options) {
     this.#clone = opts?.clone ?? DEFAULTS.clone;
     this.#ttl = opts?.ttl ?? DEFAULTS.ttl;
+    this.#fnKey = opts?.fnKey;
 
     if (opts?.fnKey) {
       const fn = opts.fnKey;
@@ -37,30 +40,52 @@ class SMCache {
     }
   }
 
-  #wrapper({ data, ttl }: { data: unknown; ttl?: number }) {
+  #wrapper({ data, ttl, key }: { data: unknown; ttl?: number; key?: Key }) {
     const _data: unknown = this.#clone
       ? JSON.parse(JSON.stringify(data))
       : data;
     const _ttl = ttl ?? Date.now() + this.#ttl;
-    return { data: _data, expires: _ttl };
+    return { data: _data, expires: _ttl, key: key };
+  }
+
+  #unwrapper_keys(key: Key, item: CacheItem) {
+    if (!this.#fnKey) return item;
+
+    if (item.key !== key) {
+      return undefined;
+    }
+
+    return item;
+  }
+
+  #unwrapper_expiration(key: Key, item: CacheItem) {
+    if (item.expires > Date.now()) {
+      return item;
+    }
+
+    if (item.data) {
+      this.#cache.delete(key);
+    }
   }
 
   get(key: Key) {
-    const item = this.#cache.get(key);
+    let item = this.#cache.get(key);
+    if (!item) return undefined;
 
-    if (item && item.expires > Date.now()) {
-      return item.data;
-    }
+    item = this.#unwrapper_keys(key, item);
+    if (!item) return undefined;
 
-    if (item) {
-      this.#cache.delete(key);
-    }
+    item = this.#unwrapper_expiration(key, item);
+    if (!item) return undefined;
 
-    return undefined;
+    return item.data;
   }
 
   set(key: Key, data: unknown, opts?: { ttl?: number }) {
-    this.#cache.set(key, this.#wrapper({ data, ...opts }));
+    this.#cache.set(
+      key,
+      this.#wrapper({ data, ...opts, key: this.#fnKey ? key : undefined }),
+    );
   }
 
   delete(key: Key) {

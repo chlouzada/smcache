@@ -1,5 +1,11 @@
 # smcache
 
+## 2.1.0
+
+### Minor Changes
+
+- only return data if keys match when using fnKey
+
 ## 2.0.0
 
 ### Major Changes

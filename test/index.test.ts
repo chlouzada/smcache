@@ -61,27 +61,23 @@ describe('expiration', () => {
   });
 });
 
-describe('mod key function', () => {
-  test('fixed key', () => {
+describe('key mod function', () => {
+  test('collision', () => {
     const cache = create({
       fnKey: () => 1,
     });
-
-    cache.set('some key', 'value');
-    const value = cache.get('key');
-    expect(value).toBe('value');
-
+    cache.set('some key', 'some value');
     cache.set('other key', 'other value');
-    expect(cache.get('key')).toBe('other value');
+    expect(cache.get('other key')).toBe('other value');
   });
 
-  test('string and number keys should match', () => {
+  test('string and number keys should not match', () => {
     const cache = create({
       fnKey(key) {
         return String(key).toUpperCase();
       },
     });
     cache.set(1, 'number value');
-    expect(cache.get('1')).toBe('number value');
+    expect(cache.get('1')).toBeUndefined();
   });
 });
